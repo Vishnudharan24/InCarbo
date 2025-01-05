@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - InCarbo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #2E7D32;
+            --light-green: #4CAF50;
+            --white: #ffffff;
+            --dark-bg: #121212;
+            --dark-surface: #1E1E1E;
+        }
+
+        [data-theme="dark"] {
+            --primary-green: #66BB6A;
+            --light-green: #81C784;
+            --white: #121212;
+            background-color: var(--dark-bg);
+            color: #ffffff;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Update navbar styles to match index.html */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px;
+            width: 100%;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            transition: all 0.3s ease;
+            margin: 0 auto;
+            max-width: 95%;
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Login specific styles */
+        .login-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            margin: 15px;
+        }
+
+        .social-login {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .social-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .social-btn:hover {
+            background: #f5f5f5;
+            transform: translateY(-2px);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .theme-toggle {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            color: var(--primary-green);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-green);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--light-green);
+            transform: translateY(-2px);
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+            border-color: var(--primary-green);
+        }
+    </style>
+</head>
+<body>
+    <!-- Replace the existing navbar HTML with this updated version -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/"><img src="/api/placeholder/150/50" alt="InCarbo Logo"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/#about">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#projects">Projects</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#buy">Buy</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#sell">Sell</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#services">Services</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#contact">Contact</a></li>
+                </ul> -->
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <button class="theme-toggle ms-2">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="login-section">
+        <div class="login-container">
+            <h2 class="text-center mb-4">Welcome Back</h2>
+            
+            <div class="social-login">
+                <button class="social-btn">
+                    <i class="fab fa-google"></i>
+                </button>
+                <button class="social-btn">
+                    <i class="fab fa-microsoft"></i>
+                </button>
+                <button class="social-btn">
+                    <i class="fab fa-linkedin-in"></i>
+                </button>
+            </div>
+
+            <div class="divider">or</div>
+
+            <form>
+                <div class="mb-3">
+                    <select class="form-control" required>
+                        <option value="" selected disabled>Select User Type</option>
+                        <option value="buyer">Carbon Credit Buyer</option>
+                        <option value="seller">Carbon Credit Seller</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <input type="email" class="form-control" placeholder="Email address">
+                </div>
+                <div class="mb-3">
+                    <input type="password" class="form-control" placeholder="Password">
+                </div>
+                <div class="mb-3 d-flex justify-content-between">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="remember">
+                        <label class="form-check-label" for="remember">Remember me</label>
+                    </div>
+                    <a href="#" class="text-decoration-none text-success">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary">Log In</button>
+            </form>
+
+            <p class="text-center mt-4">
+                Don't have an account? 
+                <a href="#" class="text-decoration-none text-success">Sign up</a>
+            </p>
+        </div>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dark mode toggle
+        const themeToggle = document.querySelector('.theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.setAttribute('data-theme', 
+                document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'
+            );
+            themeToggle.querySelector('i').classList.toggle('fa-sun');
+            themeToggle.querySelector('i').classList.toggle('fa-moon');
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            document.querySelector('.navbar').classList.toggle('scrolled', window.scrollY > 50);
+        });
+    </script>
+</body>
+</html>

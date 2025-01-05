@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InCarbo - Carbon Credit Marketplace</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #2E7D32;
+            --light-green: #4CAF50;
+            --white: #ffffff;
+            --dark-bg: #121212;
+            --dark-surface: #1E1E1E;
+        }
+
+        [data-theme="dark"] {
+            --primary-green: #66BB6A;
+            --light-green: #81C784;
+            --white: #121212;
+            background-color: var(--dark-bg);
+            color: #ffffff;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s ease;
+            padding-top: 20px; /* Match navbar top spacing */
+            scroll-padding-top: 100px; /* Increased to account for new spacing */
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px; /* Changed from border-radius: 0 0 20px 20px */
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px; /* Add top spacing */
+            width: 100%;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            transition: all 0.3s ease;
+            margin: 0 auto; /* Center the navbar */
+            max-width: 95%; /* Prevent navbar from touching edges */
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--primary-green);
+            margin: 0 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: var(--light-green);
+            transform: translateY(-2px);
+        }
+
+        .section {
+            padding: 100px 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+            border-color: var(--primary-green);
+            transform: translateY(-2px);
+        }
+
+        .form-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-green);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--light-green);
+            transform: translateY(-2px);
+        }
+
+        .project-card {
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            transform: scale(1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .project-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .service-icon {
+            font-size: 2.5rem;
+            color: var(--primary-green);
+            margin-bottom: 1rem;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            color: var(--primary-green);
+        }
+
+        .testimonial-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1rem 0;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="#"><img src="/api/placeholder/150/50" alt="InCarbo Logo"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#projects">Projects</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#buy">Buy</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#sell">Sell</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#services">Services</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+                    <li class="nav-item"><a class="btn btn-primary ms-3" href="login.html">Log In</a></li>
+                </ul>
+                <button class="theme-toggle ms-2">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <section id="about" class="section hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 mb-4">Revolutionizing Carbon Credit Trading</h1>
+                    <p class="lead">Connecting businesses with verified carbon credit projects worldwide. Make your environmental impact count with InCarbo.</p>
+                </div>
+                <div class="col-lg-6 position-relative">
+                    <video autoplay muted loop class="w-100 rounded-4">
+                        <source src="assets/SolarDrone.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="testimonials" class="section bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5 fade-in">What Our Clients Say</h2>
+            <div class="row">
+                <div class="col-md-4 fade-in">
+                    <div class="testimonial-card">
+                        <i class="fas fa-quote-left fa-2x mb-3 text-success"></i>
+                        <p>InCarbo has transformed how we approach carbon credit trading.</p>
+                        <div class="mt-3">
+                            <h5 class="mb-0">Jane Smith</h5>
+                            <small>CEO, EcoTech</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- Add more testimonials as needed -->
+            </div>
+        </div>
+    </section>
+
+    <section id="projects" class="section">
+        <div class="container">
+            <h2 class="text-center mb-5">Available Projects</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card project-card">
+                        <img src="assets/ForestConservation.jpg" class="card-img-top" alt="Forest Conservation">
+                        <div class="card-body">
+                            <h5 class="card-title">Forest Conservation</h5>
+                            <p class="card-text">Protecting and restoring natural forests to capture CO2.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card project-card">
+                        <img src="assets/RenewableEnergy.jpeg" class="card-img-top" alt="Renewable Energy">
+                        <div class="card-body">
+                            <h5 class="card-title">Renewable Energy</h5>
+                            <p class="card-text">Solar and wind projects reducing carbon emissions.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card project-card">
+                        <img src="assets/OceanConservation.jpeg" class="card-img-top" alt="Ocean Conservation">
+                        <div class="card-body">
+                            <h5 class="card-title">Ocean Conservation</h5>
+                            <p class="card-text">Protecting marine ecosystems for carbon sequestration.</p>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <section id="buy" class="section">
+        <div class="container">
+            <h2 class="text-center mb-5">Buy Carbon Credits</h2>
+            <div class="form-container">
+                <form id="buyForm" onsubmit="handleBuySubmit(event)">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="buyName" name="name" placeholder="Name" required>
+                            <input type="email" class="form-control" id="buyEmail" name="email" placeholder="Email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="buyCountry" name="country" placeholder="Country" required>
+                            <input type="text" class="form-control" id="buyCompany" name="companyName" placeholder="Company Name" required>
+                        </div>
+                        <div class="col-12">
+                            <textarea class="form-control" id="buyRequirements" name="requirements" rows="4" placeholder="Requirements" required></textarea>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary">Submit Request</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section id="sell" class="section bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Sell Carbon Credits</h2>
+            <div class="form-container">
+                <form id="sellForm" onsubmit="handleSellSubmit(event)">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="sellName" name="name" placeholder="Name" required>
+                            <input type="email" class="form-control" id="sellEmail" name="email" placeholder="Email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="sellCountry" name="country" placeholder="Country" required>
+                            <input type="text" class="form-control" id="sellCompany" name="companyName" placeholder="Company Name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <select class="form-select" id="sellTechnology" name="technology" required>
+                                <option value="" selected disabled>Select Technology</option>
+                                <option value="Direct Air Capture">Direct Air Capture</option>
+                                <option value="Biomass Carbon Removal">Biomass Carbon Removal</option>
+                                <option value="Enhanced Weathering">Enhanced Weathering</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <select class="form-select" id="sellVerification" name="verification" required>
+                                <option value="" selected disabled>Credit Verification Status</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <textarea class="form-control" id="sellDescription" name="description" rows="4" placeholder="Organization Description" required></textarea>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary">Submit Project</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    
+
+    <section id="services" class="section bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Our Services</h2>
+            <div class="row g-4">
+                <div class="col-md-4 text-center">
+                    <div class="service-icon">🌱</div>
+                    <h4>Project Verification</h4>
+                    <p>Thorough verification of carbon credit projects ensuring quality and legitimacy.</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="service-icon">🤝</div>
+                    <h4>Market Access</h4>
+                    <p>Connect with verified buyers and sellers in our global marketplace.</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="service-icon">📊</div>
+                    <h4>Portfolio Management</h4>
+                    <p>Track and manage your carbon credit portfolio with advanced tools.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+
+    <section id="contact" class="section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h2 class="mb-4">Contact Us</h2>
+                    <div class="contact-info">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-envelope-fill me-3 fs-4 text-success"></i>
+                            <a href="mailto:contact@incarbo.com" class="text-decoration-none text-dark">contact@incarbo.com</a>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-linkedin me-3 fs-4 text-success"></i>
+                            <a href="https://linkedin.com/company/incarbo" class="text-decoration-none text-dark">linkedin.com/company/incarbo</a>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-instagram me-3 fs-4 text-success"></i>
+                            <a href="https://instagram.com/incarbo" class="text-decoration-none text-dark">@incarbo</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="form-container">
+                        <form>
+                            <input type="text" class="form-control mb-3" placeholder="Name">
+                            <input type="email" class="form-control mb-3" placeholder="Email">
+                            <textarea class="form-control mb-3" rows="4" placeholder="Message"></textarea>
+                            <button type="submit" class="btn btn-primary">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Dark mode toggle
+        const themeToggle = document.querySelector('.theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.setAttribute('data-theme', 
+                document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'
+            );
+            themeToggle.querySelector('i').classList.toggle('fa-sun');
+            themeToggle.querySelector('i').classList.toggle('fa-moon');
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            document.querySelector('.navbar').classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Fade-in animation
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(element => {
+            observer.observe(element);
+        });
+
+        async function handleBuySubmit(event) {
+            event.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('buyName').value,
+                email: document.getElementById('buyEmail').value,
+                country: document.getElementById('buyCountry').value,
+                companyName: document.getElementById('buyCompany').value,
+                requirements: document.getElementById('buyRequirements').value,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/add-buyer', {  // Changed from 'http://localhost:5000'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert('Request submitted successfully!');
+                    document.getElementById('buyForm').reset();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to submit request');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to submit request. Please try again.');
+            }
+        }
+
+        async function handleSellSubmit(event) {
+            event.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('sellName').value,
+                email: document.getElementById('sellEmail').value,
+                country: document.getElementById('sellCountry').value,
+                companyName: document.getElementById('sellCompany').value,
+                technology: document.getElementById('sellTechnology').value,
+                verification: document.getElementById('sellVerification').value,
+                description: document.getElementById('sellDescription').value,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/add-seller', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert('Project submitted successfully!');
+                    document.getElementById('sellForm').reset();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to submit project');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to submit project. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

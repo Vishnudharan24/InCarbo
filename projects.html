@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Carbon Projects</title>
+    <style>
+        .navbar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar a {
+            color: #333;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar a:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .navbar a.active {
+            background: #1a1a1a;
+            color: white;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f6f9fc 0%, #edf2f7 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #2d3748;
+        }
+
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .total-tonnes {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .total-tonnes::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #48bb78;
+            border-radius: 50%;
+        }
+
+        .sort-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .sort-section select {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            color: #2d3748;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sort-section select:hover {
+            border-color: #cbd5e0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .projects-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .project-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .project-item:hover:not(.project-header) {
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .project-header {
+            font-weight: 600;
+            color: #4a5568;
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        .project-info {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .project-image {
+            width: 100px;
+            height: 70px;
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .project-image:hover {
+            transform: scale(1.05);
+        }
+
+        .project-details h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #1a202c;
+            font-weight: 600;
+        }
+
+        .project-meta {
+            font-size: 0.9rem;
+            color: #718096;
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .meta-tag {
+            padding: 0.25rem 0.75rem;
+            background: #edf2f7;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #4a5568;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            background: #c6f6d5;
+            color: #2f855a;
+            display: inline-block;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .amount-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .amount-total {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .amount-circle {
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid #4299e1;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .amount-circle::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #4299e1;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .amount-detail {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-left: 2rem;
+        }
+
+        .price {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .registry-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.95rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .registry-link:hover {
+            background: #f7fafc;
+        }
+
+        .registry-link img {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .registry-code {
+            color: #a0aec0;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 1200px) {
+            .project-item {
+                grid-template-columns: 2fr 1fr 1fr 1fr;
+            }
+
+            .project-header > div:nth-child(5),
+            .project-item > div:nth-child(5) {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .project-item {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .project-header {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+                gap: 1rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="BuyerDashboard.html" class="active">Dashboard</a>
+        <a href="projects.html">Upcoming Projects</a>
+        <a href="#">Trace ID verification</a>
+        <a href="#" style="margin-left:auto;">Logout</a>
+    </nav>
+
+    <div class="header">
+        <div class="total-tonnes">484,659 tonnes</div>
+        <div class="sort-section">
+            <span>Sort by</span>
+            <select>
+                <option>Product name</option>
+                <option>Price</option>
+                <option>Vintage</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="projects-container">
+        <div class="project-item project-header">
+            <div>Project</div>
+            <div>Vintages</div>
+            <div>Integrity status</div>
+            <div>Amount for sale</div>
+            <div>Price / t</div>
+            <div>Registry</div>
+        </div>
+
+        <div class="project-item">
+            <div class="project-info">
+                <img src="/api/placeholder/100/70" alt="Brazilian Industrial Biochar" class="project-image">
+                <div class="project-details">
+                    <h3>Brazilian Industrial Biochar</h3>
+                    <div class="project-meta">
+                        <span class="meta-tag">Brazil</span>
+                        <span class="meta-tag">Removal</span>
+                        <span class="meta-tag">Biochar</span>
+                    </div>
+                </div>
+            </div>
+            <div>2024</div>
+            <div>
+                <span class="status-badge">Accepted</span>
+            </div>
+            <div class="amount-info">
+                <div class="amount-total">
+                    <span class="amount-circle"></span>
+                    29,000 t
+                </div>
+                <div class="amount-detail">20,000 expected Dec 2024</div>
+            </div>
+            <div class="price">$120.00</div>
+            <div>
+                <a href="#" class="registry-link">
+                    <img src="/api/placeholder/24/24" alt="Puro.earth">
+                    <div>
+                        <div>Puro.earth</div>
+                        <div class="registry-code">175913</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="project-item">
+            <div class="project-info">
+                <img src="/api/placeholder/100/70" alt="Namibian Biochar" class="project-image">
+                <div class="project-details">
+                    <h3>Namibian Biochar</h3>
+                    <div class="project-meta">
+                        <span class="meta-tag">Namibia</span>
+                        <span class="meta-tag">Removal</span>
+                        <span class="meta-tag">Biochar</span>
+                    </div>
+                </div>
+            </div>
+            <div>2025</div>
+            <div>
+                <span class="status-badge">Accepted</span>
+            </div>
+            <div class="amount-info">
+                <div class="amount-total">
+                    <span class="amount-circle"></span>
+                    5,500 t
+                </div>
+                <div class="amount-detail">5,500 t expected Jun 2025</div>
+            </div>
+            <div class="price">$180.00</div>
+            <div>
+                <a href="#" class="registry-link">
+                    <img src="/api/placeholder/24/24" alt="Puro.earth">
+                    <div>
+                        <div>Puro.earth</div>
+                        <div class="registry-code">236048</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
