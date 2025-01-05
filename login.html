@@ -155,9 +155,10 @@
             const type = document.getElementById('userType').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const username = document.getElementById('username').value;  // Get username value
 
             // Debug log
-            console.log('Sending login data:', { type, email, password });
+            console.log('Sending login data:', { type, email, password, username });
 
             try {
                 const response = await fetch('http://127.0.0.1:5000/login', {
@@ -169,7 +170,8 @@
                     body: JSON.stringify({ 
                         type: type,
                         email: email,
-                        password: password 
+                        password: password,
+                        username: username  // Include username in request body
                     })
                 });
 
@@ -177,7 +179,7 @@
                 console.log('Server response:', result);  // Debug log
 
                 if (response.ok) {
-                    window.location.href = result.redirect;
+                    window.location.href = result.redirect;  // Redirect to the URL provided by the server
                 } else {
                     const errorMsg = document.getElementById('errorMessage');
                     errorMsg.textContent = result.error || 'Login failed';
@@ -250,6 +252,9 @@
                 </div>
                 <div class="mb-3">
                     <input type="email" class="form-control" id="email" placeholder="Email address" required>
+                </div>
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="username" placeholder="Username" required> <!-- Add username input -->
                 </div>
                 <div class="mb-3">
                     <input type="password" class="form-control" id="password" placeholder="Password" required>

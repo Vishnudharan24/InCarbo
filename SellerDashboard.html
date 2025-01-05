@@ -1,235 +1,173 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Dashboard</title>
+    <title>Seller Dashboard - InCarbo</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 500;
+        :root {
+            --primary-green: #2E7D32;
+            --light-green: #4CAF50;
+            --white: #ffffff;
+            --dark-bg: #121212;
+            --dark-surface: #1E1E1E;
         }
-        .status-accepted {
-            background-color: #E8F5E9;
-            color: #2E7D32;
+
+        [data-theme="dark"] {
+            --primary-green: #66BB6A;
+            --light-green: #81C784;
+            --white: #121212;
+            background-color: var(--dark-bg);
+            color: #ffffff;
         }
-        .tag {
-            background-color: #F5F5F5;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            margin-right: 8px;
-        }
-        .total-tonnes {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .green-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #4CAF50;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        .table-header {
-            background-color: #F8F9FA;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-        .project-card {
-            border: 1px solid #E0E0E0;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-        .registry-id {
-            color: #757575;
-            font-size: 14px;
-        }
-        .expected-date {
-            color: #757575;
-            font-size: 14px;
-        }
-        .navbar {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.95);
-            padding: 1rem 2rem;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s ease;
+            min-height: 100vh;
             display: flex;
-            gap: 2rem;
-            align-items: center;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px;
+            width: 100%;
+            z-index: 1000;
+            padding: 1rem 2rem;
             transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 0 auto;
+            max-width: 95%;
         }
 
-        .navbar a {
-            color: #333;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 10px;
-            transition: all 0.3s ease;
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
 
-        .navbar a:hover {
-            background: #f0f0f0;
-            transform: translateY(-2px);
+        .theme-toggle {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            color: var(--primary-green);
         }
 
-        .navbar a.active {
-            background: #1a1a1a;
-            color: white;
+        .project-container {
+            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
         }
-        .container {
-            margin-top: 100px; /* Adjust this value as needed */
+
+        .project-container h3 {
+            margin-bottom: 10px;
+        }
+
+        .project-container p {
+            margin: 5px 0;
         }
     </style>
+    <script>
+        async function fetchProjects() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/dashboard', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+
+                const projects = await response.json();
+                console.log('Fetched projects:', projects);  // Debug log
+
+                const projectBody = document.getElementById('projects');
+                projects.forEach(project => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${project.project_name}</td>
+                        <td>${project.categories.join(', ')}</td>
+                        <td>${project.country}</td>
+                        <td>${project.vintages}</td>
+                        <td>${project.integrity_status}</td>
+                        <td>${project.amount_for_sale.current}</td>
+                        <td>$${project.price_per_ton}</td>
+                        <td>${project.registry.name} (ID: ${project.registry.id})</td>
+                    `;
+                    projectBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching projects:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchProjects);
+    </script>
 </head>
 <body>
-<nav class="navbar">
-  <a href="#" class="active">Portfolio</a>
-  <a href="#">Trace ID verification</a>
-  <a href="index.html" style="margin-left:auto;">Logout</a>
-</nav>
-    <div class="container py-4">
-
-        <!-- Table Header -->
-        <div class="row table-header">
-            <div class="col-3">PROJECT</div>
-            <div class="col">VINTAGES</div>
-            <div class="col">INTEGRITY STATUS</div>
-            <div class="col">AMOUNT FOR SALE</div>
-            <div class="col">PRICE / T</div>
-            <div class="col">REGISTRY</div>
-        </div>
-
-        <!-- Project Cards -->
-        <div class="project-card">
-            <div class="row align-items-center">
-                <div class="col-3">
-                    <h6 class="mb-2">Brazilian Industrial Biochar</h6>
-                    <div>
-                        <span class="tag">Brazil</span>
-                        <span class="tag">Removal</span>
-                        <span class="tag">Biochar</span>
-                    </div>
-                </div>
-                <div class="col">2024</div>
-                <div class="col">
-                    <span class="status-badge status-accepted">ACCEPTED</span>
-                </div>
-                <div class="col">
-                    <div>29,000 t</div>
-                    <div class="expected-date">20,000 expected Dec 2024</div>
-                </div>
-                <div class="col">$120.00</div>
-                <div class="col">
-                    <div>Puro.earth</div>
-                    <div class="registry-id">175913</div>
-                </div>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/"><img src="/api/placeholder/150/50" alt="InCarbo Logo"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <button class="theme-toggle ms-2">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
+                </ul>
             </div>
         </div>
+    </nav>
 
-        <div class="project-card">
-            <div class="row align-items-center">
-                <div class="col-3">
-                    <h6 class="mb-2">Namibian Biochar</h6>
-                    <div>
-                        <span class="tag">Namibia</span>
-                        <span class="tag">Removal</span>
-                        <span class="tag">Biochar</span>
-                    </div>
-                </div>
-                <div class="col">2025</div>
-                <div class="col">
-                    <span class="status-badge status-accepted">ACCEPTED</span>
-                </div>
-                <div class="col">
-                    <div>5,500 t</div>
-                    <div class="expected-date">5,500 t expected Jun 2025</div>
-                </div>
-                <div class="col">$180.00</div>
-                <div class="col">
-                    <div>Puro.earth</div>
-                    <div class="registry-id">236048</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add New Project Button -->
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">
-            Add New Project
-        </button>
-
-        <!-- Add Project Modal -->
-        <div class="modal fade" id="addProjectModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add New Project</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form>
-                            <div class="mb-3">
-                                <label class="form-label">Project Name</label>
-                                <input type="text" class="form-control">
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col">
-                                    <label class="form-label">Country</label>
-                                    <input type="text" class="form-control">
-                                </div>
-                                <div class="col">
-                                    <label class="form-label">Type</label>
-                                    <input type="text" class="form-control">
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col">
-                                    <label class="form-label">Category</label>
-                                    <input type="text" class="form-control">
-                                </div>
-                                <div class="col">
-                                    <label class="form-label">Vintage</label>
-                                    <input type="text" class="form-control">
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col">
-                                    <label class="form-label">Amount (tonnes)</label>
-                                    <input type="number" class="form-control">
-                                </div>
-                                <div class="col">
-                                    <label class="form-label">Price per Tonne</label>
-                                    <input type="number" class="form-control">
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Expected Date</label>
-                                <input type="text" class="form-control" placeholder="e.g., Dec 2024">
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary">Add Project</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <section class="container mt-5">
+        <h2 class="text-center mb-4">Your Projects</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Categories</th>
+                    <th>Country</th>
+                    <th>Vintage</th>
+                    <th>Integrity Status</th>
+                    <th>Amount for Sale</th>
+                    <th>Price per Ton</th>
+                    <th>Registry</th>
+                </tr>
+            </thead>
+            <tbody id="projects"></tbody>
+        </table>
+    </section>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dark mode toggle
+        const themeToggle = document.querySelector('.theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.setAttribute('data-theme', 
+                document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'
+            );
+            themeToggle.querySelector('i').classList.toggle('fa-sun');
+            themeToggle.querySelector('i').classList.toggle('fa-moon');
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            document.querySelector('.navbar').classList.toggle('scrolled', window.scrollY > 50);
+        });
+    </script>
 </body>
 </html>

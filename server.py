@@ -1,11 +1,16 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from pymongo import MongoClient
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 import os
 
 app = Flask(__name__)
 # Configure CORS to allow all origins
 CORS(app)
+
+# Initialize JWT
+app.config["JWT_SECRET_KEY"] = "welcometotheclubshawtiee"
+jwt = JWTManager(app)
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')  # Replace with your MongoDB URI
@@ -14,7 +19,9 @@ db = client.InCarbo  # Corrected the database name to 'InCarbo'
 # Collections
 BuyerInitial_collection = db.BuyerInitial  # Corrected the collection name to 'BuyerInitial'
 SellerInitial_collection = db.SellerInitial  # Corrected the collection name to 'SellerInitial'
-login_collection = db.login  # Add login collection
+Buyer_collection = db.Buyer  # Add Buyer collection
+Seller_collection = db.Seller  # Add Seller collection
+Projects_collection = db.projects  # Add Projects collection
 
 # Route for serving index.html
 @app.route('/')
@@ -82,39 +89,67 @@ def login():
         user_type = data.get('type')
         email = data.get('email')
         password = data.get('password')
-        
+        username = data.get('username')  # Get username from request
 
-        print(f"Attempting login - Email: {email}, Type: {user_type}")  # Debug print
+        print(f"Attempting login - Email: {email}, Username: {username}, Type: {user_type}")  # Debug print
 
         # Validate inputs
-        if not user_type or not email or not password:
-            return jsonify({"error": "Email, password and user type are required"}), 400
+        if not user_type or not email or not password or not username:
+            return jsonify({"error": "Email, password, username, and user type are required"}), 400
+
+        # Determine the collection based on user type
+        collection = Buyer_collection if user_type == "buyer" else Seller_collection
 
         # Debug print the query
         query = {
-            "type": user_type,
             "email": email,
             "password": password,
-            
+            "username": username  # Include username in query
         }
         print("Database query:", query)
 
         # Check if user exists in the database
-        user = login_collection.find_one(query)
+        user = collection.find_one(query)
         print("Database result:", user)  # Debug print
 
         if user:
-            # Modify redirect based on user type
-            redirect_page = "BuyerDashboard.html" if user['type'] == "buyer" else "SellerDashboard.html"
+            # Generate JWT token
+            token = create_access_token(identity={"user_id": str(user["_id"]), "user_type": user_type, "username": username})
+            redirect_page = "BuyerDashboard.html" if user_type == "buyer" else "SellerDashboard.html"
             return jsonify({
                 "message": "Login successful",
-                "redirect": redirect_page
+                "access_token": token,
+                "redirect": redirect_page  # Include redirect URL in response
             }), 200
-            
+
         return jsonify({"error": "Invalid credentials - User not found"}), 401
 
     except Exception as e:
         print("Login error:", str(e))  # Debug print
+        return jsonify({"error": str(e)}), 500
+
+# Add route to fetch projects for a seller
+@app.route('/dashboard', methods=['GET'])
+@jwt_required()
+def seller_dashboard():
+    try:
+        # Get the current user's identity from the JWT
+        current_user = get_jwt_identity()
+        username = current_user["username"]
+        user_type = current_user["user_type"]
+
+        if user_type != "seller":
+            return jsonify({"error": "Unauthorized access"}), 403
+
+        # Fetch projects associated with the seller's username
+        projects = Projects_collection.find({"username": username})
+        
+        # Convert MongoDB cursor to a list of dictionaries
+        projects_list = [project for project in projects]
+        
+        return jsonify(projects_list), 200
+
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 # Add routes for dashboard pages
@@ -153,6 +188,34 @@ def serve_trace_verification():
     if os.path.exists(file_path):
         return send_file(file_path)
     return jsonify({"error": "TraceIDVerification.html not found"}), 404
+
+@app.route('/add-seller-project', methods=['POST'])
+def add_seller_project():
+    try:
+        data = request.json
+        seller_email = data.get('email')
+        seller_company = data.get('company')
+        project_data = data.get('project')
+
+        if not seller_email or not seller_company or not project_data:
+            return jsonify({"error": "Seller email, company name, and project data are required"}), 400
+
+        project_data['seller_email'] = seller_email
+        project_data['seller_company'] = seller_company
+        Projects_collection.insert_one(project_data)  # Use Projects_collection instead of Seller_collection
+        return jsonify({"message": "Project added successfully"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/seller-projects', methods=['GET'])
+def get_seller_projects():
+    try:
+        projects = list(Projects_collection.find({}, {"_id": 0}))  # Fetch from Projects_collection
+        print("Fetched projects:", projects)  # Debug print
+        return jsonify(projects), 200
+    except Exception as e:
+        print("Error fetching projects:", str(e))  # Debug print
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
