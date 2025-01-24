@@ -77,11 +77,24 @@
         .project-container p {
             margin: 5px 0;
         }
+
+        .project-form {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        [data-theme="dark"] .project-form {
+            background: var(--dark-surface);
+        }
     </style>
     <script>
         async function fetchProjects() {
             try {
-                const response = await fetch('http://127.0.0.1:5000/dashboard', {
+                const response = await fetch('http://127.0.0.1:5000/get-projects', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -96,7 +109,7 @@
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${project.project_name}</td>
-                        <td>${project.categories.join(', ')}</td>
+                        <td>${project.technology.join(', ')}</td>
                         <td>${project.country}</td>
                         <td>${project.vintages}</td>
                         <td>${project.integrity_status}</td>
@@ -134,12 +147,68 @@
     </nav>
 
     <section class="container mt-5">
-        <h2 class="text-center mb-4">Your Projects</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Your Projects</h2>
+            <button class="btn btn-success" id="showFormBtn">Add New Project</button>
+        </div>
+
+        <div class="project-form" id="projectForm">
+            <h3 class="mb-4">Add New Project</h3>
+            <form id="addProjectForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Project Name</label>
+                        <input type="text" class="form-control" name="project_name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Technology</label>
+                        <input type="text" class="form-control" name="technology" placeholder="Comma separated values" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Country</label>
+                        <input type="text" class="form-control" name="country" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Vintage</label>
+                        <input type="text" class="form-control" name="vintages" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Integrity Status</label>
+                        <select class="form-select" name="integrity_status" required>
+                            <option value="Verified">Verified</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Under Review">Under Review</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Amount for Sale</label>
+                        <input type="number" class="form-control" name="amount_for_sale" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Price per Ton ($)</label>
+                        <input type="number" step="0.01" class="form-control" name="price_per_ton" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Registry Name</label>
+                        <input type="text" class="form-control" name="registry_name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">TraceID</label>
+                        <input type="text" class="form-control" name="trace_id" required>
+                    </div>
+                </div>
+                <div class="text-end mt-3">
+                    <button type="button" class="btn btn-secondary me-2" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-success">Create Project</button>
+                </div>
+            </form>
+        </div>
+
         <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Project Name</th>
-                    <th>Categories</th>
+                    <th>Technology</th>
                     <th>Country</th>
                     <th>Vintage</th>
                     <th>Integrity Status</th>
@@ -167,6 +236,65 @@
         // Navbar scroll effect
         window.addEventListener('scroll', () => {
             document.querySelector('.navbar').classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Form handling
+        const showFormBtn = document.getElementById('showFormBtn');
+        const projectForm = document.getElementById('projectForm');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const addProjectForm = document.getElementById('addProjectForm');
+
+        showFormBtn.addEventListener('click', () => {
+            projectForm.style.display = 'block';
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            projectForm.style.display = 'none';
+            addProjectForm.reset();
+        });
+
+        addProjectForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(addProjectForm);
+            
+            const projectData = {
+                project_name: formData.get('project_name'),
+                technology: formData.get('technology').split(',').map(t => t.trim()),
+                country: formData.get('country'),
+                vintages: formData.get('vintages'),
+                integrity_status: formData.get('integrity_status'),
+                amount_for_sale: {
+                    current: parseInt(formData.get('amount_for_sale'))
+                },
+                price_per_ton: parseFloat(formData.get('price_per_ton')),
+                registry: {
+                    name: formData.get('registry_name'),
+                    id: Date.now().toString() // Generate a temporary ID
+                },
+                trace_id: formData.get('trace_id')
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/add-project', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify(projectData)
+                });
+
+                if (response.ok) {
+                    projectForm.style.display = 'none';
+                    addProjectForm.reset();
+                    fetchProjects(); // Refresh the projects list
+                } else {
+                    alert('Failed to create project');
+                }
+            } catch (error) {
+                console.error('Error creating project:', error);
+                alert('Error creating project');
+            }
         });
     </script>
 </body>
