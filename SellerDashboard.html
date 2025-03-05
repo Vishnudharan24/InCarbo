@@ -254,48 +254,54 @@
         });
 
         addProjectForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(addProjectForm);
-            
-            const projectData = {
-                project_name: formData.get('project_name'),
-                technology: formData.get('technology').split(',').map(t => t.trim()),
-                country: formData.get('country'),
-                vintages: formData.get('vintages'),
-                integrity_status: formData.get('integrity_status'),
-                amount_for_sale: {
-                    current: parseInt(formData.get('amount_for_sale'))
-                },
-                price_per_ton: parseFloat(formData.get('price_per_ton')),
-                registry: {
-                    name: formData.get('registry_name'),
-                    id: Date.now().toString() // Generate a temporary ID
-                },
-                trace_id: formData.get('trace_id')
-            };
+    e.preventDefault();
+    const formData = new FormData(addProjectForm);
+    
+    // Log the form data to debug
+    console.log("Form data:");
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+    }
+    
+    const projectData = {
+        project_name: formData.get('project_name'),
+        technology: formData.get('technology').split(',').map(t => t.trim()),
+        country: formData.get('country'),
+        vintages: formData.get('vintages'),
+        integrity_status: formData.get('integrity_status'),
+        amount_for_sale: parseInt(formData.get('amount_for_sale')),
+        price_per_ton: parseFloat(formData.get('price_per_ton')),
+        registry_name: formData.get('registry_name'),
+        trace_id: formData.get('trace_id')
+    };
+    
+    console.log("Sending data:", projectData);
 
-            try {
-                const response = await fetch('http://127.0.0.1:5000/add-project', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    },
-                    body: JSON.stringify(projectData)
-                });
-
-                if (response.ok) {
-                    projectForm.style.display = 'none';
-                    addProjectForm.reset();
-                    fetchProjects(); // Refresh the projects list
-                } else {
-                    alert('Failed to create project');
-                }
-            } catch (error) {
-                console.error('Error creating project:', error);
-                alert('Error creating project');
-            }
+    try {
+        const response = await fetch('http://127.0.0.1:5000/add-project', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            },
+            body: JSON.stringify(projectData)
         });
+
+        const responseData = await response.json();
+        console.log("Response:", response.status, responseData);
+
+        if (response.ok) {
+            projectForm.style.display = 'none';
+            addProjectForm.reset();
+            fetchProjects(); // Refresh the projects list
+        } else {
+            alert(`Failed to create project: ${responseData.error || response.statusText}`);
+        }
+    } catch (error) {
+        console.error('Error creating project:', error);
+        alert('Error creating project');
+    }
+});
     </script>
 </body>
 </html>

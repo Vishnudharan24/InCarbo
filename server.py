@@ -1,13 +1,10 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from pymongo import MongoClient
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 import os
 
 app = Flask(__name__)
 CORS(app)  # Allow CORS for all origins
-app.config["JWT_SECRET_KEY"] = "welcometotheclubshawtiee"
-jwt = JWTManager(app)
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
@@ -19,7 +16,6 @@ SellerInitial_collection = db.SellerInitial
 Buyer_collection = db.Buyer
 Seller_collection = db.Seller
 Projects_collection = db.projects
-
 
 
 @app.before_request
@@ -103,11 +99,9 @@ def login():
         user = collection.find_one(query)
 
         if user:
-            token = create_access_token(identity={"user_id": str(user["_id"]), "user_type": user_type, "username": username})
             redirect_page = "BuyerDashboard.html" if user_type == "buyer" else "SellerDashboard.html"
             return jsonify({
                 "message": "Login successful",
-                "access_token": token,
                 "redirect": redirect_page
             }), 200
 
@@ -131,30 +125,31 @@ def serve_seller_dashboard():
     return jsonify({"error": "SellerDashboard.html not found"}), 404
 
 @app.route('/add-project', methods=['POST'])
-@jwt_required()
 def add_project():
     try:
         data = request.json
         print("Incoming Data:", data)  # Debug log to inspect incoming payload
-        user = get_jwt_identity()
-        username = user.get('username')
-
-        if not username:
-            return jsonify({"error": "Unauthorized - User not found"}), 403
-        print(data)
-
-        # Ensure project data matches the form schema
+        username = 'John Doe'  # Hardcoded username as JWT was removed
+        
+        # Restructure received data to match expected format
         project_data = {
-            "project_name": data.get("project_name", "null"),
-            "technology": data.get("technology", "null"),
-            "country": data.get("country", "null"),
-            "vintages": data.get("vintages", "null"),
-            "integrity_status": data.get("integrity_status", "null"),
-            "amount_for_sale": data.get("amount_for_sale", "null"),
-            "price_per_ton": data.get("price_per_ton", "null"),
-            "registry_name": data.get("registry_name", "null"),
-            "trace_id": data.get("trace_id", "null")
+            "project_name": data.get("project_name"),
+            "technology": data.get("technology"),
+            "country": data.get("country"),
+            "vintages": data.get("vintages"),
+            "integrity_status": data.get("integrity_status"),
+            "amount_for_sale": {
+                "current": data.get("amount_for_sale")
+            },
+            "price_per_ton": data.get("price_per_ton"),
+            "registry": {
+                "name": data.get("registry_name"),
+                "id": data.get("trace_id")
+            },
+            "trace_id": data.get("trace_id")
         }
+
+        print("Processed project data:", project_data)
 
         # Append the new project to the project array
         update_result = Seller_collection.update_one(
@@ -171,17 +166,13 @@ def add_project():
         print("Error:", str(e))  # Debug log to catch errors
         return jsonify({"error": str(e)}), 500
 
-
-
 @app.route('/get-projects', methods=['GET'])
-@jwt_required()
 def get_projects():
     try:
-        user = get_jwt_identity()
-        username = user.get('username')
+        username = 'John Doe'  # Get username from query parameter instead of JWT
 
         if not username:
-            return jsonify({"error": "Unauthorized - User not found"}), 403
+            return jsonify({"error": "Username parameter is required"}), 400
 
         seller = Seller_collection.find_one({"username": username}, {"_id": 0, "projects": 1})
         if not seller:
@@ -191,7 +182,6 @@ def get_projects():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route('/test-db', methods=['GET'])
 def test_db():
@@ -203,5 +193,3 @@ def test_db():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
