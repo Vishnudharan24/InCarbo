@@ -2,9 +2,16 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from pymongo import MongoClient
 import os
+import jwt
+import datetime
+from functools import wraps
 
 app = Flask(__name__)
 CORS(app)  # Allow CORS for all origins
+
+# JWT Configuration
+app.config['SECRET_KEY'] = 'your_secret_key'  # Change this to a strong secret key in production
+TOKEN_EXPIRATION = 24  # hours
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
@@ -17,6 +24,34 @@ Buyer_collection = db.Buyer
 Seller_collection = db.Seller
 Projects_collection = db.projects
 
+# JWT token required decorator
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        # Get token from headers
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+        
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        
+        try:
+            # Decode the token
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            current_user = data['username']
+            user_type = data['user_type']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token has expired'}), 401
+        except:
+            return jsonify({'error': 'Token is invalid'}), 401
+            
+        return f(current_user, user_type, *args, **kwargs)
+    
+    return decorated
 
 @app.before_request
 def handle_options_request():
@@ -99,10 +134,18 @@ def login():
         user = collection.find_one(query)
 
         if user:
+            # Generate JWT token
+            token = jwt.encode({
+                'username': username,
+                'user_type': user_type,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=TOKEN_EXPIRATION)
+            }, app.config['SECRET_KEY'], algorithm="HS256")
+            
             redirect_page = "BuyerDashboard.html" if user_type == "buyer" else "SellerDashboard.html"
             return jsonify({
                 "message": "Login successful",
-                "redirect": redirect_page
+                "redirect": redirect_page,
+                "token": token
             }), 200
 
         return jsonify({"error": "Invalid credentials - User not found"}), 401
@@ -125,11 +168,15 @@ def serve_seller_dashboard():
     return jsonify({"error": "SellerDashboard.html not found"}), 404
 
 @app.route('/add-project', methods=['POST'])
-def add_project():
+@token_required
+def add_project(current_user, user_type):
     try:
+        # Check if the user is a seller
+        if user_type != "seller":
+            return jsonify({"error": "Only sellers can add projects"}), 403
+            
         data = request.json
         print("Incoming Data:", data)  # Debug log to inspect incoming payload
-        username = 'John Doe'  # Hardcoded username as JWT was removed
         
         # Restructure received data to match expected format
         project_data = {
@@ -151,9 +198,9 @@ def add_project():
 
         print("Processed project data:", project_data)
 
-        # Append the new project to the project array
+        # Append the new project to the project array for the specific user
         update_result = Seller_collection.update_one(
-            {"username": username},
+            {"username": current_user},
             {"$push": {"project": project_data}}
         )
 
@@ -167,18 +214,19 @@ def add_project():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/get-projects', methods=['GET'])
-def get_projects():
+@token_required
+def get_projects(current_user, user_type):
     try:
-        username = 'John Doe'  # Get username from query parameter instead of JWT
+        # Check if the user is a seller
+        if user_type != "seller":
+            return jsonify({"error": "Only sellers can view their projects"}), 403
 
-        if not username:
-            return jsonify({"error": "Username parameter is required"}), 400
-
-        seller = Seller_collection.find_one({"username": username}, {"_id": 0, "projects": 1})
+        seller = Seller_collection.find_one({"username": current_user}, {"_id": 0, "project": 1})
         if not seller:
             return jsonify({"error": "Seller not found"}), 404
 
-        return jsonify(seller.get("projects", [])), 200
+        # Return the projects array or an empty array if not found
+        return jsonify(seller.get("project", [])), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

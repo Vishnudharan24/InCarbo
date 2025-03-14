@@ -90,42 +90,20 @@
         [data-theme="dark"] .project-form {
             background: var(--dark-surface);
         }
-    </style>
-    <script>
-        async function fetchProjects() {
-            try {
-                const response = await fetch('http://127.0.0.1:5000/get-projects', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    }
-                });
-
-                const projects = await response.json();
-                console.log('Fetched projects:', projects);  // Debug log
-
-                const projectBody = document.getElementById('projects');
-                projects.forEach(project => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${project.project_name}</td>
-                        <td>${project.technology.join(', ')}</td>
-                        <td>${project.country}</td>
-                        <td>${project.vintages}</td>
-                        <td>${project.integrity_status}</td>
-                        <td>${project.amount_for_sale.current}</td>
-                        <td>$${project.price_per_ton}</td>
-                        <td>${project.registry.name} (ID: ${project.registry.id})</td>
-                    `;
-                    projectBody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error fetching projects:', error);
-            }
+        
+        .user-welcome {
+            font-weight: 500;
+            margin-right: 15px;
         }
-
-        document.addEventListener('DOMContentLoaded', fetchProjects);
-    </script>
+        
+        .logout-btn {
+            cursor: pointer;
+            color: var(--primary-green);
+            background: transparent;
+            border: none;
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg">
@@ -136,6 +114,14 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="user-welcome">Welcome, <span id="username">User</span></span>
+                    </li>
+                    <li class="nav-item">
+                        <button class="logout-btn" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </li>
                     <li class="nav-item">
                         <button class="theme-toggle ms-2">
                             <i class="fas fa-moon"></i>
@@ -204,25 +190,96 @@
             </form>
         </div>
 
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Project Name</th>
-                    <th>Technology</th>
-                    <th>Country</th>
-                    <th>Vintage</th>
-                    <th>Integrity Status</th>
-                    <th>Amount for Sale</th>
-                    <th>Price per Ton</th>
-                    <th>Registry</th>
-                </tr>
-            </thead>
-            <tbody id="projects"></tbody>
-        </table>
+        <div id="projectsContainer">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Project Name</th>
+                        <th>Technology</th>
+                        <th>Country</th>
+                        <th>Vintage</th>
+                        <th>Integrity Status</th>
+                        <th>Amount for Sale</th>
+                        <th>Price per Ton</th>
+                        <th>Registry</th>
+                    </tr>
+                </thead>
+                <tbody id="projects"></tbody>
+            </table>
+            <div id="noProjects" class="alert alert-info" style="display: none;">
+                You don't have any projects yet. Use the "Add New Project" button to create one.
+            </div>
+        </div>
     </section>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Auth related functions
+        function checkAuthStatus() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return false;
+            }
+            return true;
+        }
+        
+        function logout() {
+            localStorage.removeItem('access_token');
+            window.location.href = '/login.html';
+        }
+        
+        // Project related functions
+        async function fetchProjects() {
+            try {
+                if (!checkAuthStatus()) return;
+                
+                const token = localStorage.getItem('access_token');
+                const response = await fetch('http://127.0.0.1:5000/get-projects', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to fetch projects');
+                }
+
+                const projects = await response.json();
+                console.log('Fetched projects:', projects);
+                
+                const projectBody = document.getElementById('projects');
+                projectBody.innerHTML = '';
+                
+                if (projects.length === 0) {
+                    document.getElementById('noProjects').style.display = 'block';
+                    return;
+                }
+                
+                document.getElementById('noProjects').style.display = 'none';
+                
+                projects.forEach(project => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${project.project_name}</td>
+                        <td>${Array.isArray(project.technology) ? project.technology.join(', ') : project.technology}</td>
+                        <td>${project.country}</td>
+                        <td>${project.vintages}</td>
+                        <td>${project.integrity_status}</td>
+                        <td>${project.amount_for_sale.current || project.amount_for_sale}</td>
+                        <td>$${project.price_per_ton}</td>
+                        <td>${project.registry.name || project.registry_name} (ID: ${project.registry.id || project.trace_id})</td>
+                    `;
+                    projectBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching projects:', error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+
         // Dark mode toggle
         const themeToggle = document.querySelector('.theme-toggle');
         themeToggle.addEventListener('click', () => {
@@ -243,6 +300,7 @@
         const projectForm = document.getElementById('projectForm');
         const cancelBtn = document.getElementById('cancelBtn');
         const addProjectForm = document.getElementById('addProjectForm');
+        const logoutBtn = document.getElementById('logoutBtn');
 
         showFormBtn.addEventListener('click', () => {
             projectForm.style.display = 'block';
@@ -252,56 +310,86 @@
             projectForm.style.display = 'none';
             addProjectForm.reset();
         });
+        
+        logoutBtn.addEventListener('click', logout);
 
         addProjectForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(addProjectForm);
-    
-    // Log the form data to debug
-    console.log("Form data:");
-    for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
-    }
-    
-    const projectData = {
-        project_name: formData.get('project_name'),
-        technology: formData.get('technology').split(',').map(t => t.trim()),
-        country: formData.get('country'),
-        vintages: formData.get('vintages'),
-        integrity_status: formData.get('integrity_status'),
-        amount_for_sale: parseInt(formData.get('amount_for_sale')),
-        price_per_ton: parseFloat(formData.get('price_per_ton')),
-        registry_name: formData.get('registry_name'),
-        trace_id: formData.get('trace_id')
-    };
-    
-    console.log("Sending data:", projectData);
+            e.preventDefault();
+            
+            if (!checkAuthStatus()) return;
+            
+            const formData = new FormData(addProjectForm);
+            
+            // Log the form data to debug
+            console.log("Form data:");
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+            
+            const projectData = {
+                project_name: formData.get('project_name'),
+                technology: formData.get('technology').split(',').map(t => t.trim()),
+                country: formData.get('country'),
+                vintages: formData.get('vintages'),
+                integrity_status: formData.get('integrity_status'),
+                amount_for_sale: parseInt(formData.get('amount_for_sale')),
+                price_per_ton: parseFloat(formData.get('price_per_ton')),
+                registry_name: formData.get('registry_name'),
+                trace_id: formData.get('trace_id')
+            };
+            
+            console.log("Sending data:", projectData);
 
-    try {
-        const response = await fetch('http://127.0.0.1:5000/add-project', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-            },
-            body: JSON.stringify(projectData)
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch('http://127.0.0.1:5000/add-project', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(projectData)
+                });
+
+                const responseData = await response.json();
+                console.log("Response:", response.status, responseData);
+
+                if (response.ok) {
+                    projectForm.style.display = 'none';
+                    addProjectForm.reset();
+                    fetchProjects(); // Refresh the projects list
+                } else {
+                    alert(`Failed to create project: ${responseData.error || response.statusText}`);
+                }
+            } catch (error) {
+                console.error('Error creating project:', error);
+                alert('Error creating project');
+            }
         });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (checkAuthStatus()) {
+                // Extract username from JWT for display (without verification)
+                try {
+                    const token = localStorage.getItem('access_token');
+                    const base64Url = token.split('.')[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
 
-        const responseData = await response.json();
-        console.log("Response:", response.status, responseData);
-
-        if (response.ok) {
-            projectForm.style.display = 'none';
-            addProjectForm.reset();
-            fetchProjects(); // Refresh the projects list
-        } else {
-            alert(`Failed to create project: ${responseData.error || response.statusText}`);
-        }
-    } catch (error) {
-        console.error('Error creating project:', error);
-        alert('Error creating project');
-    }
-});
+                    const payload = JSON.parse(jsonPayload);
+                    document.getElementById('username').textContent = payload.username;
+                } catch (e) {
+                    console.error('Error parsing token:', e);
+                }
+                
+                // Fetch projects
+                fetchProjects();
+            }
+        });
     </script>
 </body>
 </html>
+                }
